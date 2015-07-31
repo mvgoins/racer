@@ -69,4 +69,7 @@ trackpieces = {
 				["triangleBL"] = {},
 				["triangleUL"] = {},
 				["triangleUR"] = {},
+
 }
+
+carCollisionZones = {}

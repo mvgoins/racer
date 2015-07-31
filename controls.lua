@@ -18,12 +18,35 @@ function keysTitle(key)
 end
 
 function keysRace(key)
-	if key == "d" then
-		debug = "on"
+	if key == "1" then
+		if debugColMap == "off" then
+			debugColMap = "on"
+		else
+			debugColMap = "off"
+		end
+	end
+	
+	
+	if key == "2" then
+		if debugColCar == "off" then
+			debugColCar = "on"
+		else
+			debugColCar = "off"
+		end
+	end
+	
+	if key == "c" then
+		if drawcars == "off" then
+			drawcars = "on"
+		else
+			drawcars = "off"
+		end
 	end
 	
 	if key == "n" then
-		debug = "off"
+		debugColMap = "off"
+		debugColCar = "off"
+		drawcars = "on"
 	end
 
 end

@@ -8,7 +8,9 @@ require "tracks"
 view = "title"
 currenttrack = 1
 
-debug = "off"
+debugColMap = "off"
+debugColCar = "off"
+drawcars = "on"
 
 function love.load()
 end
@@ -30,37 +32,38 @@ function trackBlocks() -- took longer to do it this way than by hand, but WHATEV
 		trackpieces.triangleUR[y] = {}
 
 		for x = 1,32 do
-			trackpieces.wall[y][x] = 0
-			trackpieces.track[y][x] = 1
-			trackpieces.triangleBR[y][x] = 0
-			trackpieces.triangleBL[y][x] = 0
-			trackpieces.triangleUL[y][x] = 0
-			trackpieces.triangleUR[y][x] = 0
+			trackpieces.track[y][x] = 0 -- track is passable
+
+			trackpieces.wall[y][x] = 1 -- not passable
+			trackpieces.triangleBR[y][x] = 1
+			trackpieces.triangleBL[y][x] = 1
+			trackpieces.triangleUL[y][x] = 1
+			trackpieces.triangleUR[y][x] = 1
 		end
 	end
 
 	for y = 1,32 do
 		for x = 1,y do
-			trackpieces.triangleBR[y][33 - x] = 1
+			trackpieces.triangleBR[y][33 - x] = 0 -- build passable space
 		end
 	end
 			
 			
 	for y = 1,32 do
 		for x = 1,y do
-			trackpieces.triangleBL[y][x] = 1
+			trackpieces.triangleBL[y][x] = 0
 		end
 	end
 	
 	for y = 1,32 do
 		for x = 1,33 - y do
-			trackpieces.triangleUL[y][x] = 1
+			trackpieces.triangleUL[y][x] = 0
 		end
 	end
 	
 	for y = 1,32 do
 		for x = y,32 do
-			trackpieces.triangleUR[y][x] = 1
+			trackpieces.triangleUR[y][x] = 0
 		end
 	end
 			
@@ -78,8 +81,6 @@ function newRace()
 	print("emptied the racer table")
 	for i = 1,participants do -- build the table of racers
 		print("Racer "..i)
-		--print(cartokens[i])
-		--print(tracks[currenttrack])
 		racers[i] = {
 						["color"] = cartokens[i],
 						["locX"] = tracks[currenttrack].attributes.starts[i].xloc,
@@ -92,22 +93,16 @@ function newRace()
 						["brake"] = "no",
 						["lap"] = 1,
 						["maxlap"] = 3,
-
+						["collisionmarker"] = i
 					}
 		print(" ...finished")
 	end -- ending racers building
 	
-	
-	local collisionY = 0
-	local collisionX = 0
-	local newcol = 0
-	local entries = 0
-	local rowset = 0
 	-- build the collision map
-	
 	for y = 1, #tracks[currenttrack].layout do
 		for newrow = 1,32 do
 			tracks[currenttrack].collision[newrow + 32 * (y - 1)] = {}
+			--carCollisionZones[newrow + 32 * (y - 1)] = {}
 		end
 		--print("collision rows: "..#tracks[currenttrack].collision)
 		
@@ -115,7 +110,7 @@ function newRace()
 		--print("column row "..x)
 			for r = 1,32 do
 				for c = 1,32 do
-
+					--carCollisionZones[r + 32 * (y - 1)][c + 32 * (x - 1)] = 0
 					if thistrack.layout[y][x] == 0 then
 						thistrack.collision[r + 32 * (y - 1)][c + 32 * (x - 1)] = trackpieces.wall[r][c]
 
@@ -165,22 +160,64 @@ function love.update(dt)
 		
 		keysRacing(dt)
 		
+		-- reset the car collision table
+		for y = 1, #tracks[currenttrack].layout do
+			for newrow = 1,32 do
+				carCollisionZones[newrow + 32 * (y - 1)] = {}
+			end
+			
+			for x = 1, #tracks[currenttrack].layout[y] do
+				for r = 1,32 do
+					for c = 1,32 do
+						carCollisionZones[r + 32 * (y - 1)][c + 32 * (x - 1)] = 0				
+					end
+				end
+			end
+		end
+		
+		-- update the car collision table
+		for racer,stats in ipairs(racers) do
+			local thiscar = racers[racer] -- makes things easier to type/keep track of
+
+			for y = -7,8 do
+				for x = -7,8 do
+					carCollisionZones[math.floor(thiscar.locY + y)][math.floor(thiscar.locX + x)] = racers[racer].collisionmarker
+				end
+			end
+		end -- moving this for now?
+		
 		for racer,stats in ipairs(racers) do
 
 			local thiscar = racers[racer] -- makes things easier to type/keep track of
 			
+
+
+
 			racerSpeed(dt,thiscar) -- speed happens after the racer has adjusted orientation
 			
 			thiscar.locX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2)
 			thiscar.locY = thiscar.locY + thiscar.speed * math.sin(thiscar.orientation - math.pi/2)
---			print("ceiling values of x,y is "..math.ceil(thiscar.locX)..","..math.ceil(thiscar.locY))
-			
 
-			checkY = math.ceil(thiscar.locY)
-			checkX = math.ceil(thiscar.locX)
-						
-			if tracks[currenttrack].collision[checkY][checkX] == 0 then
+			local checkY = math.floor(thiscar.locY) -- NOTE: you need to math.floor or .ceil the location values if you're going to match them on a table!
+			local checkX = math.floor(thiscar.locX) -- NOTE: otherwise you throw an error every time you try and move the car (because there are no fractional array points)
+			
+			-- did you hit a wall or other track hazard?		
+			if tracks[currenttrack].collision[checkY][checkX] == 1 then
 				thiscar.orientation = thiscar.orientation + math.pi
+				thiscar.speed = thiscar.speed * 0.75
+			end
+			
+			-- did you hit another car?
+			local me = thiscar.collisionmarker
+			
+			for y = -7,8 do
+				for x = -7,8 do
+					if carCollisionZones[checkY + y][checkX + x] ~= 0 and carCollisionZones[checkY + y][checkX + x] ~= me then
+						local target = carCollisionZones[checkY + y][checkX + x]
+						racers[target].speed = racers[target].speed + 0.25 * thiscar.speed
+						thiscar.speed = thiscar.speed * 0.90
+					end
+				end
 			end
 					
 			-- adjust speed to min/max as very last step	
@@ -193,7 +230,7 @@ function love.update(dt)
 			end
 			-- nothing below this line but function ends!			
 			
-		end
+		end -- ending the ipairs(racers) updates
 		
 
 		
