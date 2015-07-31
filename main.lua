@@ -93,7 +93,8 @@ function newRace()
 						["brake"] = "no",
 						["lap"] = 1,
 						["maxlap"] = 3,
-						["collisionmarker"] = i
+						["collisionmarker"] = i,
+						["didhit"] = "no",
 					}
 		print(" ...finished")
 	end -- ending racers building
@@ -158,7 +159,7 @@ function love.update(dt)
 
 	if raceStatus == "running" then -- main action happens here -- break out into separate function(s) for clarity?
 		
-		keysRacing(dt)
+		keysRacing(dt) -- accept all key inputs first
 		
 		-- reset the car collision table
 		for y = 1, #tracks[currenttrack].layout do
@@ -181,7 +182,9 @@ function love.update(dt)
 
 			for y = -7,8 do
 				for x = -7,8 do
-					carCollisionZones[math.floor(thiscar.locY + y)][math.floor(thiscar.locX + x)] = racers[racer].collisionmarker
+					local carcolY = math.floor(thiscar.locY + y)
+					local carcolX = math.floor(thiscar.locX + x)
+					carCollisionZones[carcolY][carcolX] = racers[racer].collisionmarker
 				end
 			end
 		end -- moving this for now?
@@ -189,48 +192,66 @@ function love.update(dt)
 		for racer,stats in ipairs(racers) do
 
 			local thiscar = racers[racer] -- makes things easier to type/keep track of
+			thiscar.didhit = "no"
 			
 			-- have the computer racers adjust orientation and gas/brake
 			if thiscar.isPlayer == "no" then
 			end	
 			
 
-
+			-- give the car a new speed
 			racerSpeed(dt,thiscar) -- speed happens after the racer has adjusted orientation
 			
-			thiscar.locX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2) -- I forget why this. to offset the 0 = 90 orientation?
-			thiscar.locY = thiscar.locY + thiscar.speed * math.sin(thiscar.orientation - math.pi/2)
-
-			local checkY = math.floor(thiscar.locY) -- NOTE: you need to math.floor or .ceil the location values if you're going to match them on a table!
-			local checkX = math.floor(thiscar.locX) -- NOTE: otherwise you throw an error every time you try and move the car (because there are no fractional array points)
+			-- set the future x and y values the car is trying to move into
+			local newX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2) -- I forget why this. to offset the 0 = 90 orientation?
+			local newY = thiscar.locY + thiscar.speed * math.sin(thiscar.orientation - math.pi/2)
 			
-			--[[ did you hit a wall or other track hazard?		NOTE: moved this into a single collision check block, since its not working on its own anyway
-			if tracks[currenttrack].collision[checkY][checkX] == 1 then
-				neworientation = -(math.pi/2 - thiscar.orientation)
-				thiscar.orientation = neworientation
-				thiscar.speed = thiscar.speed * 0.75
-			end-]]
+			-- round those values so that you can check them against tables
+			local checkY = math.ceil(newX) -- NOTE: you need to math.floor or .ceil the location values if you're going to match them on a table!
+			local checkX = math.ceil(newY) -- NOTE: otherwise you throw an error every time you try and move the car (because there are no fractional array points)
 			
 			-- did you hit something?
 			local me = thiscar.collisionmarker
 			
 			for y = -7,8 do
 				for x = -7,8 do
-					if tracks[currenttrack].collision[checkY + y][checkX + x] == 1 then
-						neworientation = thiscar.orientation + math.pi -- original, simple rebound ..uh, not working right now?
---						neworientation = 0 - thiscar.orientation --
-						thiscar.orientation = neworientation
+					if thistrack.collision[checkY + y][checkX + x] == 1 then
+						print("hit at "..checkX + x..","..checkY + y)
+						print("the hit tile was a "..thistrack.collision[checkY + y][checkX + x])
+						print("car orientation was "..thiscar.orientation)
+						print("car speed was "..thiscar.speed)
+						thiscar.orientation = thiscar.orientation + math.pi -- original, simple rebound ..uh, not working right now?
 						thiscar.speed = thiscar.speed * 0.75
+						thiscar.didhit = "yes"
+						print("new car orientation is "..thiscar.orientation)
+						print("new car speed is "..thiscar.speed)
 					end					
 			
 				
 					if carCollisionZones[checkY + y][checkX + x] ~= 0 and carCollisionZones[checkY + y][checkX + x] ~= me then
+						print("hit a car!")
+						print("checking "..checkY + y..","..checkX + x)
+						print(#carCollisionZones)
+						print(#carCollisionZones[checkY + y][checkX + x])
 						local target = carCollisionZones[checkY + y][checkX + x]
+						print("hit car number "..target)
 						racers[target].speed = racers[target].speed + 0.25 * thiscar.speed
 						thiscar.speed = thiscar.speed * 0.90
+						thiscar.didhit = "yes"
+						print("hit resolved")
 					end
 				end
+			end -- end collision checks 
+
+			-- has there been an orientation change? if so, recalculate newX, newY
+			if thiscar.didhit == "yes" then 
+				newX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2)
+				newY = thiscar.locY + thiscar.speed * math.sin(thiscar.orientation - math.pi/2)
 			end
+			
+			-- moving the car
+			thiscar.locX = newX
+			thiscar.locY = newY
 					
 			-- adjust speed to min/max as very last step	
 			if thiscar.speed < 0 then
@@ -246,7 +267,7 @@ function love.update(dt)
 		
 
 		
-	end -- end running tracking
+	end -- end race updates
 		
 		
 

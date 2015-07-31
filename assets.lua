@@ -8,7 +8,7 @@ colorred = {255,0,0}
 colorblue = {0,0,255}
 colorgreen = {0,255,0}
 coloryellow = {255, 255, 0}
-
+colorblack = {0,0,0}
 
 -- track art
 wall = love.graphics.newImage("art/wallL.png")

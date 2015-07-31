@@ -43,7 +43,7 @@ function keysRace(key)
 		end
 	end
 	
-	if key == "n" then
+	if key == "n" then -- reset all the debug stuff to 'n'ormal
 		debugColMap = "off"
 		debugColCar = "off"
 		drawcars = "on"

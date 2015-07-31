@@ -71,6 +71,30 @@ function viewRace()
 			end
 		end
 		love.graphics.setColor(colorwhite)
+		
+		local thiscar = racers[player]
+		local colmap = tracks[currenttrack].collision
+		local xcount = 0
+		local ycount = 0
+		for y = -9,10 do
+			ycount = ycount + 1
+			xcount = 0
+			for x = -9,10 do
+				xcount = xcount + 1
+				local checkx = math.floor(thiscar.locX + x)
+				local checky = math.floor(thiscar.locY + y)
+				if colmap[checky][checkx] == 1 then
+					love.graphics.setColor(colorred)
+				end
+				if y >= -7 and y <=8 then
+					if x >= -7 and x <= 8 then
+						love.graphics.setColor(colorblue)
+					end
+				end
+				love.graphics.print(colmap[checky][checkx],400 + 10 * xcount,100 + 10 * ycount)
+				love.graphics.setColor(colorwhite)
+			end
+		end
 	end
 					
 	--[[ debug for testing block maps
@@ -112,7 +136,10 @@ function viewRace()
 	love.graphics.print("gas: "..racers[player].gas,10,25)
 	love.graphics.print("brake: "..racers[player].brake,10,40)
 	love.graphics.print("orientation "..racers[player].orientation,10,55)
-	
+	love.graphics.print("real X: "..racers[player].locX,400,0)
+	love.graphics.print("ceiling X: "..math.ceil(racers[player].locX),400,15)
+	love.graphics.print("real Y: "..racers[player].locY,400,30)
+	love.graphics.print("ceiling Y: "..math.ceil(racers[player].locY),400,45)
 
 end
 
