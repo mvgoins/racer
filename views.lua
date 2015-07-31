@@ -111,6 +111,7 @@ function viewRace()
 	love.graphics.print("speed: "..racers[player].speed,10,10)
 	love.graphics.print("gas: "..racers[player].gas,10,25)
 	love.graphics.print("brake: "..racers[player].brake,10,40)
+	love.graphics.print("orientation "..racers[player].orientation,10,55)
 	
 
 end

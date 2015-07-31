@@ -3,7 +3,7 @@ tracks = {
 	{ -- track 1
 
 		["attributes"] = {
-						["orientation"] = 0,
+						["orientation"] = 0, -- 0 = 90 degrees = math.pi/2 in love2d. This is annoying. 
 						["starts"] = { -- feel like this could be auto-generated on a per-track basis, but not sure if that's "better"
 										{  -- start 1
 											["xloc"] = 60,

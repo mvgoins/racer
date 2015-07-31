@@ -190,28 +190,40 @@ function love.update(dt)
 
 			local thiscar = racers[racer] -- makes things easier to type/keep track of
 			
-
+			-- have the computer racers adjust orientation and gas/brake
+			if thiscar.isPlayer == "no" then
+			end	
+			
 
 
 			racerSpeed(dt,thiscar) -- speed happens after the racer has adjusted orientation
 			
-			thiscar.locX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2)
+			thiscar.locX = thiscar.locX + thiscar.speed * math.cos(thiscar.orientation - math.pi/2) -- I forget why this. to offset the 0 = 90 orientation?
 			thiscar.locY = thiscar.locY + thiscar.speed * math.sin(thiscar.orientation - math.pi/2)
 
 			local checkY = math.floor(thiscar.locY) -- NOTE: you need to math.floor or .ceil the location values if you're going to match them on a table!
 			local checkX = math.floor(thiscar.locX) -- NOTE: otherwise you throw an error every time you try and move the car (because there are no fractional array points)
 			
-			-- did you hit a wall or other track hazard?		
+			--[[ did you hit a wall or other track hazard?		NOTE: moved this into a single collision check block, since its not working on its own anyway
 			if tracks[currenttrack].collision[checkY][checkX] == 1 then
-				thiscar.orientation = thiscar.orientation + math.pi
+				neworientation = -(math.pi/2 - thiscar.orientation)
+				thiscar.orientation = neworientation
 				thiscar.speed = thiscar.speed * 0.75
-			end
+			end-]]
 			
-			-- did you hit another car?
+			-- did you hit something?
 			local me = thiscar.collisionmarker
 			
 			for y = -7,8 do
 				for x = -7,8 do
+					if tracks[currenttrack].collision[checkY + y][checkX + x] == 1 then
+						neworientation = thiscar.orientation + math.pi -- original, simple rebound ..uh, not working right now?
+--						neworientation = 0 - thiscar.orientation --
+						thiscar.orientation = neworientation
+						thiscar.speed = thiscar.speed * 0.75
+					end					
+			
+				
 					if carCollisionZones[checkY + y][checkX + x] ~= 0 and carCollisionZones[checkY + y][checkX + x] ~= me then
 						local target = carCollisionZones[checkY + y][checkX + x]
 						racers[target].speed = racers[target].speed + 0.25 * thiscar.speed
