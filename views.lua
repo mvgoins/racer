@@ -41,7 +41,7 @@ function viewRace()
 					love.graphics.rectangle("fill",xspot,yspot,1,1)
 					love.graphics.setColor(colorwhite)
 				elseif thistile == 1 then
-					love.graphics.setColor(colorgrey)
+					love.graphics.setColor(colorpink)
 					love.graphics.rectangle("fill",xspot,yspot,1,1)
 					love.graphics.setColor(colorwhite)
 				end
@@ -95,7 +95,21 @@ function viewRace()
 				love.graphics.setColor(colorwhite)
 			end
 		end
-	end
+		
+		local y2count = 0
+		local x2count = 0
+		for y = -9,10 do
+			y2count = y2count + 1
+			x2count = 0
+			for x = -9,10 do
+				x2count = x2count + 1
+				local checkx = math.floor(thiscar.locX + x)
+				local checky = math.floor(thiscar.locY + y)
+				love.graphics.print(carCollisionZones[checky][checkx],400 + 10 * x2count, 400 + 10 * y2count)
+			end
+		end
+			
+	end -- ending debug car collision graphics
 					
 	--[[ debug for testing block maps
 	for y = 1,#trackpieces.triangleBR do
@@ -132,6 +146,7 @@ function viewRace()
 		love.graphics.print("STARTING IN: "..math.ceil(countdown),50,125)
 	end
 
+	-- debug info
 	love.graphics.print("speed: "..racers[player].speed,10,10)
 	love.graphics.print("gas: "..racers[player].gas,10,25)
 	love.graphics.print("brake: "..racers[player].brake,10,40)
